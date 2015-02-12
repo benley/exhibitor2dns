@@ -6,25 +6,29 @@ import boto
 import logging
 import requests
 
-parser = argparse.ArgumentParser(description=__doc__)
-required = parser.add_argument_group('Required flags')
-required.add_argument(
-    '--zone', required=True, type=str,
-    help='DNS zone name (e.g. prod.example.com)')
-required.add_argument(
-    '--rr', type=str, required=True,
-    help='Name of A record to manage. '
-         'Concatenated with the value of --zone unless it ends in a "."')
-required.add_argument(
-    '--exhibitor_url', required=True, metavar='URL', type=str,
-    help='Base URL to exhibitor http endpoint '
-         '(e.g. http://exhibitor.prod.example.com/)')
-parser.add_argument(
-    '--ttl', default=300, type=int,
-    help='Default record TTL (default: %(default)s)')
-parser.add_argument(
-    '--verbosity', default=20, type=int, metavar='N',
-    help='Log level (default: %(default)s)')
+
+def parse_args():
+    """Parse commandline args."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    required = parser.add_argument_group('Required flags')
+    required.add_argument(
+        '--zone', required=True, type=str,
+        help='DNS zone name (e.g. prod.example.com)')
+    required.add_argument(
+        '--rr', type=str, required=True,
+        help='Name of A record to manage. '
+             'Concatenated with the value of --zone unless it ends in a "."')
+    required.add_argument(
+        '--exhibitor_url', required=True, metavar='URL', type=str,
+        help='Base URL to exhibitor http endpoint '
+             '(e.g. http://exhibitor.prod.example.com/)')
+    parser.add_argument(
+        '--ttl', default=300, type=int,
+        help='Default record TTL (default: %(default)s)')
+    parser.add_argument(
+        '--verbosity', default=20, type=int, metavar='N',
+        help='Log level (default: %(default)s)')
+    return parser.parse_args()
 
 
 def get_zk_servers(exhibitor_url):
@@ -35,7 +39,7 @@ def get_zk_servers(exhibitor_url):
 
 def main():
     """main"""
-    args = parser.parse_args()
+    args = parse_args()
     logging.basicConfig(level=args.verbosity)
     r53 = boto.connect_route53()
     zone = r53.get_zone(args.zone)
