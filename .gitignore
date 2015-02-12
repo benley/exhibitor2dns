@@ -1,0 +1,5 @@
+*.egg/
+/dist/*
+AUTHORS
+ChangeLog
+*.egg-info/
