@@ -1,48 +1,59 @@
 #!/usr/bin/env python
 """exhibitor2dns: Dynamic DNS for Exhibitor-run Zookeeper ensembles."""
 
+import argparse
 import boto
-import gflags
 import logging
-import pprint
 import requests
-import sys
-import urlparse
 
-gflags.DEFINE_string('zone', None, 'DNS zone name (e.g. prod.example.com)')
-gflags.DEFINE_string('rr', 'zookeeper', 'Name of A record to manage')
-gflags.DEFINE_string('exhibitor_url', None,
-                     'Base URL to exhibitor http endpoint '
-                     '(e.g. http://exhibitor.prod.example.com/)')
-gflags.DEFINE_integer('ttl', 300, 'Default record TTL')
-
-gflags.DEFINE_integer('verbosity', 20, 'Log level')
-FLAGS = gflags.FLAGS
+parser = argparse.ArgumentParser(description=__doc__)
+required = parser.add_argument_group('Required flags')
+required.add_argument(
+    '--zone', required=True, type=str,
+    help='DNS zone name (e.g. prod.example.com)')
+required.add_argument(
+    '--rr', type=str, required=True,
+    help='Name of A record to manage. '
+         'Concatenated with the value of --zone unless it ends in a "."')
+required.add_argument(
+    '--exhibitor_url', required=True, metavar='URL', type=str,
+    help='Base URL to exhibitor http endpoint '
+         '(e.g. http://exhibitor.prod.example.com/)')
+parser.add_argument(
+    '--ttl', default=300, type=int,
+    help='Default record TTL (default: %(default)s)')
+parser.add_argument(
+    '--verbosity', default=20, type=int, metavar='N',
+    help='Log level (default: %(default)s)')
 
 
 def get_zk_servers(exhibitor_url):
-    url = urlparse.urljoin(exhibitor_url, '/exhibitor/v1/cluster/list')
+    """Query Exhibitor's REST api and get the current list of servers."""
+    url = '.'.join([exhibitor_url, '/exhibitor/v1/cluster/list'])
     return requests.get(url).json()['servers']
 
 
 def main():
     """main"""
-    FLAGS(sys.argv)
-    logging.basicConfig(level=FLAGS.verbosity)
+    args = parser.parse_args()
+    logging.basicConfig(level=args.verbosity)
     r53 = boto.connect_route53()
-    zone = r53.get_zone(FLAGS.zone)
+    zone = r53.get_zone(args.zone)
 
-    target_fqdn = '%s.%s' % (FLAGS.rr, FLAGS.zone)
+    if args.rr[-1] == '.':
+        target_fqdn = args.rr
+    else:
+        target_fqdn = '%s.%s.' % (args.rr, args.zone)
 
-    exhibitor_list = get_zk_servers(FLAGS.exhibitor_url)
-    logging.info('Exhibitor cluster:\n%s',
-                 pprint.pformat(exhibitor_list))
+    logging.info('Managing route53 record: %s', target_fqdn)
+
+    exhibitor_list = get_zk_servers(args.exhibitor_url)
+    logging.info('Exhibitor cluster:\n%s', exhibitor_list)
 
     existing_record = zone.get_a(target_fqdn)
 
     if existing_record:
-        logging.info('Existing record:\n%s',
-                     pprint.pformat(existing_record.resource_records))
+        logging.info('Existing record:%s', existing_record.resource_records)
         if sorted(exhibitor_list) != sorted(existing_record.resource_records):
             logging.info('Updating record to match')
             zone.update_record(existing_record, exhibitor_list)
@@ -50,7 +61,7 @@ def main():
             logging.info('Up to date.')
     else:
         logging.info('Creating new record.')
-        zone.add_a(target_fqdn, exhibitor_list, ttl=FLAGS.ttl)
+        zone.add_a(target_fqdn, exhibitor_list, ttl=args.ttl)
     logging.info('Done!')
 
 

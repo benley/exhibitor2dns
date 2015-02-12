@@ -4,3 +4,5 @@
 AUTHORS
 ChangeLog
 *.egg-info/
+*.pyc
+.*.swp
