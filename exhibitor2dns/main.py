@@ -33,7 +33,7 @@ def parse_args():
 
 def get_zk_servers(exhibitor_url):
     """Query Exhibitor's REST api and get the current list of servers."""
-    url = ''.join([exhibitor_url, '/exhibitor/v1/cluster/list'])
+    url = ''.join([exhibitor_url.rstrip('/'), '/exhibitor/v1/cluster/list'])
     return requests.get(url).json()['servers']
 
 
