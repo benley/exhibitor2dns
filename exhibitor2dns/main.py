@@ -52,12 +52,12 @@ def main():
     logging.info('Managing route53 record: %s', target_fqdn)
 
     exhibitor_list = get_zk_servers(args.exhibitor_url)
-    logging.info('Exhibitor cluster:\n%s', exhibitor_list)
+    logging.info('Exhibitor cluster: %s', exhibitor_list)
 
     existing_record = zone.get_a(target_fqdn)
 
     if existing_record:
-        logging.info('Existing record:%s', existing_record.resource_records)
+        logging.info('Existing record: %s', existing_record.resource_records)
         if sorted(exhibitor_list) != sorted(existing_record.resource_records):
             logging.info('Updating record to match')
             zone.update_record(existing_record, exhibitor_list)
