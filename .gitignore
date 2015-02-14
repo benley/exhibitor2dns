@@ -1,8 +1,12 @@
-*.egg/
-/dist/*
-/build/*
-AUTHORS
-ChangeLog
 *.egg-info/
+*.egg/
 *.pyc
 .*.swp
+.testrepository/
+.tox/
+/.coverage
+/build/*
+/cover/
+/dist/*
+AUTHORS
+ChangeLog
