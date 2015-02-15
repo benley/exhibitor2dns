@@ -2,6 +2,9 @@
 exhibitor2dns
 =============
 
+.. image:: https://travis-ci.org/benley/exhibitor2dns.svg?branch=master
+    :target: https://travis-ci.org/benley/exhibitor2dns
+
 Exhibitor2dns will keep a round-robin A record in sync with the state of a
 Zookeeper ensemble managed by the excellent Exhibitor_ supervisor `from
 Netflix`_.  This is particularly useful if your Zookeeper nodes are in an
